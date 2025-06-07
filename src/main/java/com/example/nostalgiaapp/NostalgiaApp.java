@@ -16,8 +16,12 @@ import javafx.stage.Stage;
 
 public class NostalgiaApp extends Application {
 
+    private Stage primaryStage;
+
     @Override
     public void start(Stage primaryStage) {
+        this.primaryStage = primaryStage;
+
         VBox mainContainer = new VBox();
         mainContainer.setAlignment(Pos.CENTER);
         mainContainer.setSpacing(40);
@@ -44,7 +48,7 @@ public class NostalgiaApp extends Application {
             CameraSessionPage cameraPage = new CameraSessionPage();
             try {
                 Stage cameraStage = new Stage();
-                cameraPage.show(cameraStage);
+                cameraPage.show(cameraStage, this); // Pass reference to main app
                 primaryStage.hide(); // Hide main window when camera opens
             } catch (Exception ex) {
                 ex.printStackTrace();
@@ -89,6 +93,11 @@ public class NostalgiaApp extends Application {
         primaryStage.setMinHeight(700);
         primaryStage.setResizable(true);
         primaryStage.show();
+    }
+
+    public void showMainWindow() {
+        primaryStage.show();
+        primaryStage.toFront();
     }
 
     public static void main(String[] args) {
