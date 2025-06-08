@@ -6,12 +6,12 @@ import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
@@ -25,6 +25,7 @@ import org.opencv.imgproc.Imgproc;
 import org.opencv.videoio.VideoCapture;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class CameraSessionPage {
 
@@ -197,9 +198,70 @@ public class CameraSessionPage {
         editButton.setPrefHeight(40);
         editButton.setStyle("-fx-background-color: #2ECC71; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 20; -fx-font-size: 14px;");
         editButton.setVisible(false);
+
+
+
+        // In your CameraSessionPage.java, replace the edit button's setOnAction with this:
+
+        // Replace the editButton.setOnAction in your CameraSessionPage.java with this fixed version:
+
         editButton.setOnAction(e -> {
-            System.out.println("Edit Photos - Not implemented yet");
+            // Convert Mat objects to JavaFX Images for the edit page
+            List<Image> photosForEdit = new ArrayList<>();
+
+            for (Mat photo : photosTaken) {
+                if (photo != null && !photo.empty()) {
+                    try {
+                        Image fxImage = OpenCVUtils.mat2Image(photo);
+                        photosForEdit.add(fxImage);
+                    } catch (Exception ex) {
+                        System.err.println("Error converting photo for edit page: " + ex.getMessage());
+                    }
+                }
+            }
+
+            // Only navigate if we have photos to edit
+            if (!photosForEdit.isEmpty()) {
+                try {
+                    // Close current camera resources
+                    closeCamera();
+
+                    // Create and show the photo editing page (FIXED: Use correct class name)
+                    PhotoEditingPage editPage = new PhotoEditingPage(photosForEdit, currentStage, mainApp);
+                    Scene editScene = new Scene(editPage, 1200, 800);
+
+                    currentStage.setScene(editScene);
+                    currentStage.setTitle("Nostalgia - Edit Photos");
+
+                    System.out.println("✅ Navigated to Photo Editing page with " + photosForEdit.size() + " photos");
+
+                } catch (Exception ex) {
+                    System.err.println("❌ Error navigating to edit page: " + ex.getMessage());
+                    ex.printStackTrace();
+
+                    // Show error dialog and stay on camera page
+                    Platform.runLater(() -> {
+                        Alert alert = new Alert(Alert.AlertType.ERROR);
+                        alert.setTitle("Navigation Error");
+                        alert.setHeaderText("Cannot open photo editor");
+                        alert.setContentText("There was an error opening the photo editing page. Please try again.");
+                        alert.showAndWait();
+                    });
+                }
+            } else {
+                System.out.println("❌ No photos available to edit");
+
+                // Show info dialog
+                Platform.runLater(() -> {
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle("No Photos");
+                    alert.setHeaderText("No photos to edit");
+                    alert.setContentText("Please take some photos first before trying to edit them.");
+                    alert.showAndWait();
+                });
+            }
         });
+
 
         retakeButton = new Button("📷 RETAKE");
         retakeButton.setPrefWidth(150);
