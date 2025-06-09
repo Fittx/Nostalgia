@@ -35,6 +35,7 @@ public class PhotoEditingPage extends BorderPane {
     private NostalgiaApp mainApp;
     private List<String> axolotlStickerPaths;
     private List<String> catStickerPaths;
+    private List<String> pandaStickerPaths;
     private List<ImageView> stickerViews;
     private String currentStickerType = "none";
 
@@ -42,6 +43,7 @@ public class PhotoEditingPage extends BorderPane {
     private void initializeStickerPaths() {
         axolotlStickerPaths = new ArrayList<>();
         catStickerPaths = new ArrayList<>();
+        pandaStickerPaths = new ArrayList<>(); // ADD THIS LINE
         stickerViews = new ArrayList<>();
 
         // Add all axolotl sticker paths (existing code)
@@ -57,7 +59,7 @@ public class PhotoEditingPage extends BorderPane {
         axolotlStickerPaths.add(axolotlBasePath + "sad.png");
         axolotlStickerPaths.add(axolotlBasePath + "sleep.png");
 
-        // Add all cat sticker paths (NEW)
+        // Add all cat sticker paths (existing code)
         String catBasePath = "/com/example/nostalgiaapp/Stickers/cat-stickers/";
         catStickerPaths.add(catBasePath + "angry.png");
         catStickerPaths.add(catBasePath + "eat.png");
@@ -69,7 +71,21 @@ public class PhotoEditingPage extends BorderPane {
         catStickerPaths.add(catBasePath + "sad.png");
         catStickerPaths.add(catBasePath + "sing.png");
         catStickerPaths.add(catBasePath + "yes.png");
+
+        // ADD ALL PANDA STICKER PATHS (NEW)
+        String pandaBasePath = "/com/example/nostalgiaapp/Stickers/panda-stickers/";
+        pandaStickerPaths.add(pandaBasePath + "angry.png");
+        pandaStickerPaths.add(pandaBasePath + "birthday.png");
+        pandaStickerPaths.add(pandaBasePath + "eat.png");
+        pandaStickerPaths.add(pandaBasePath + "fever.png");
+        pandaStickerPaths.add(pandaBasePath + "full.png");
+        pandaStickerPaths.add(pandaBasePath + "happy.png");
+        pandaStickerPaths.add(pandaBasePath + "hello.png");
+        pandaStickerPaths.add(pandaBasePath + "love.png");
+        pandaStickerPaths.add(pandaBasePath + "mocking.png");
+        pandaStickerPaths.add(pandaBasePath + "peace.png");
     }
+
 
 
     // Layout selection buttons for highlighting
@@ -78,13 +94,13 @@ public class PhotoEditingPage extends BorderPane {
 
     // Color options matching the design
     private final Color[] backgroundColorOptions = {
-            Color.BLACK, Color.BLUE, Color.web("#8B4513"), Color.LIGHTGRAY,
+            Color.BLACK, Color.web("#c9edf7"), Color.web("#8B4513"), Color.LIGHTGRAY,
             Color.HOTPINK, Color.GOLD, Color.LIGHTPINK, Color.WHITE
     };
 
     private final Color[] photostripColorOptions = {
-            Color.BLACK, Color.BLUE, Color.web("#8B4513"), Color.WHITE,
-            Color.HOTPINK, Color.GOLD, Color.LIGHTPINK, Color.LIGHTGRAY
+            Color.BLACK, Color.web("#c9edf7"), Color.web("#8B4513"), Color.LIGHTGRAY,
+            Color.HOTPINK, Color.GOLD, Color.LIGHTPINK, Color.WHITE
     };
 
     // Filter options
@@ -92,10 +108,6 @@ public class PhotoEditingPage extends BorderPane {
             "B&W", "Bright", "Sepia", "Warm", "Cold"
     };
 
-    // Sticker options (placeholder emojis)
-    private final String[] stickerOptions = {
-            "🧠", "🌍", "🐯", "❌", "🌟", "⭐", "🦄", "🗑️"
-    };
 
     public PhotoEditingPage(List<Image> photos, Stage stage, NostalgiaApp mainApp) {
         this.sourceImages = photos != null ? photos : new ArrayList<>();
@@ -333,14 +345,16 @@ public class PhotoEditingPage extends BorderPane {
         stickersLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
         stickersLabel.setFill(Color.web("#333333"));
 
-        // Create sticker grid
+        // Create sticker grid - now only 4 buttons in a single row
         GridPane stickerGrid = new GridPane();
         stickerGrid.setHgap(12);
         stickerGrid.setVgap(12);
 
-        // DECLARE BOTH BUTTONS FIRST (without setting actions)
+        // DECLARE ONLY THE FOUR BUTTONS WE NEED
         Button axolotlStickerBtn = new Button();
         Button catStickerBtn = new Button();
+        Button pandaStickerBtn = new Button();
+        Button resetStickerBtn = new Button();
 
         // Set up axolotl button appearance
         try {
@@ -370,14 +384,46 @@ public class PhotoEditingPage extends BorderPane {
         catStickerBtn.setStyle("-fx-font-size: 20px; -fx-background-radius: 50%; -fx-min-width: 45; -fx-min-height: 45; " +
                 "-fx-background-color: white; -fx-border-color: #ddd; -fx-border-width: 1; -fx-border-radius: 50%; -fx-cursor: hand;");
 
-        // NOW SET THE ACTIONS (after both buttons are declared)
+        // Set up panda button appearance
+        try {
+            Image pandaIcon = new Image(getClass().getResourceAsStream("/com/example/nostalgiaapp/Stickers/panda-stickers/mocking.png"));
+            ImageView pandaIconView = new ImageView(pandaIcon);
+            pandaIconView.setFitWidth(30);
+            pandaIconView.setFitHeight(30);
+            pandaIconView.setPreserveRatio(true);
+            pandaStickerBtn.setGraphic(pandaIconView);
+        } catch (Exception e) {
+            pandaStickerBtn.setText("🐼");
+        }
+        pandaStickerBtn.setStyle("-fx-font-size: 20px; -fx-background-radius: 50%; -fx-min-width: 45; -fx-min-height: 45; " +
+                "-fx-background-color: white; -fx-border-color: #ddd; -fx-border-width: 1; -fx-border-radius: 50%; -fx-cursor: hand;");
+
+        // Set up reset button appearance with the PNG image
+        try {
+            Image resetIcon = new Image(getClass().getResourceAsStream("/com/example/nostalgiaapp/Images Background/reset bin.png"));
+            ImageView resetIconView = new ImageView(resetIcon);
+            resetIconView.setFitWidth(25);
+            resetIconView.setFitHeight(25);
+            resetIconView.setPreserveRatio(true);
+            resetStickerBtn.setGraphic(resetIconView);
+        } catch (Exception e) {
+            resetStickerBtn.setText("🗑️"); // Fallback text if image fails to load
+        }
+        resetStickerBtn.setStyle("-fx-font-size: 20px; -fx-background-radius: 50%; -fx-min-width: 45; -fx-min-height: 45; " +
+                "-fx-background-color: white; -fx-border-color: #ddd; -fx-border-width: 1; -fx-border-radius: 50%; -fx-cursor: hand;");
+
+        // SET THE ACTIONS FOR ALL BUTTONS
         axolotlStickerBtn.setOnAction(e -> {
             addRandomAxolotlStickers();
             currentStickerType = "axolotl";
             axolotlStickerBtn.setStyle("-fx-font-size: 20px; -fx-background-radius: 50%; -fx-min-width: 45; -fx-min-height: 45; " +
                     "-fx-background-color: white; -fx-border-color: #4CAF50; -fx-border-width: 3; -fx-border-radius: 50%; -fx-cursor: hand;");
-            // Reset cat button style
+            // Reset other buttons
             catStickerBtn.setStyle("-fx-font-size: 20px; -fx-background-radius: 50%; -fx-min-width: 45; -fx-min-height: 45; " +
+                    "-fx-background-color: white; -fx-border-color: #ddd; -fx-border-width: 1; -fx-border-radius: 50%; -fx-cursor: hand;");
+            pandaStickerBtn.setStyle("-fx-font-size: 20px; -fx-background-radius: 50%; -fx-min-width: 45; -fx-min-height: 45; " +
+                    "-fx-background-color: white; -fx-border-color: #ddd; -fx-border-width: 1; -fx-border-radius: 50%; -fx-cursor: hand;");
+            resetStickerBtn.setStyle("-fx-font-size: 20px; -fx-background-radius: 50%; -fx-min-width: 45; -fx-min-height: 45; " +
                     "-fx-background-color: white; -fx-border-color: #ddd; -fx-border-width: 1; -fx-border-radius: 50%; -fx-cursor: hand;");
         });
 
@@ -386,42 +432,40 @@ public class PhotoEditingPage extends BorderPane {
             currentStickerType = "cat";
             catStickerBtn.setStyle("-fx-font-size: 20px; -fx-background-radius: 50%; -fx-min-width: 45; -fx-min-height: 45; " +
                     "-fx-background-color: white; -fx-border-color: #4CAF50; -fx-border-width: 3; -fx-border-radius: 50%; -fx-cursor: hand;");
-            // Reset axolotl button style
+            // Reset other buttons
             axolotlStickerBtn.setStyle("-fx-font-size: 20px; -fx-background-radius: 50%; -fx-min-width: 45; -fx-min-height: 45; " +
+                    "-fx-background-color: white; -fx-border-color: #ddd; -fx-border-width: 1; -fx-border-radius: 50%; -fx-cursor: hand;");
+            pandaStickerBtn.setStyle("-fx-font-size: 20px; -fx-background-radius: 50%; -fx-min-width: 45; -fx-min-height: 45; " +
+                    "-fx-background-color: white; -fx-border-color: #ddd; -fx-border-width: 1; -fx-border-radius: 50%; -fx-cursor: hand;");
+            resetStickerBtn.setStyle("-fx-font-size: 20px; -fx-background-radius: 50%; -fx-min-width: 45; -fx-min-height: 45; " +
                     "-fx-background-color: white; -fx-border-color: #ddd; -fx-border-width: 1; -fx-border-radius: 50%; -fx-cursor: hand;");
         });
 
-        // Add buttons to grid
-        stickerGrid.add(axolotlStickerBtn, 0, 0);
-        stickerGrid.add(catStickerBtn, 1, 0); // Place cat button next to axolotl button
-
-        // Add other placeholder buttons (modify the loop to account for the new cat button)
-        for (int i = 2; i < stickerOptions.length - 1; i++) {
-            Button stickerBtn = new Button(stickerOptions[i]);
-            stickerBtn.setStyle("-fx-font-size: 20px; -fx-background-radius: 50%; -fx-min-width: 45; -fx-min-height: 45; " +
-                    "-fx-background-color: white; -fx-border-color: #ddd; -fx-border-width: 1; -fx-border-radius: 50%; -fx-cursor: hand;");
-            stickerBtn.setOnAction(e -> {
-                Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setTitle("Stickers Not Available");
-                alert.setHeaderText(null);
-                alert.setContentText("This sticker type is not yet implemented.");
-                alert.showAndWait();
-            });
-            stickerGrid.add(stickerBtn, i % 4, i / 4);
-        }
-
-        // Add reset/trash button
-        Button resetStickerBtn = new Button("🗑️");
-        resetStickerBtn.setStyle("-fx-font-size: 20px; -fx-background-radius: 50%; -fx-min-width: 45; -fx-min-height: 45; " +
-                "-fx-background-color: white; -fx-border-color: #ddd; -fx-border-width: 1; -fx-border-radius: 50%; -fx-cursor: hand;");
-        resetStickerBtn.setOnAction(e -> {
-            clearStickers();
-            currentStickerType = "none"; // Reset sticker type tracking
-            // Reset both button styles
+        pandaStickerBtn.setOnAction(e -> {
+            addRandomPandaStickers();
+            currentStickerType = "panda";
+            pandaStickerBtn.setStyle("-fx-font-size: 20px; -fx-background-radius: 50%; -fx-min-width: 45; -fx-min-height: 45; " +
+                    "-fx-background-color: white; -fx-border-color: #4CAF50; -fx-border-width: 3; -fx-border-radius: 50%; -fx-cursor: hand;");
+            // Reset other buttons
             axolotlStickerBtn.setStyle("-fx-font-size: 20px; -fx-background-radius: 50%; -fx-min-width: 45; -fx-min-height: 45; " +
                     "-fx-background-color: white; -fx-border-color: #ddd; -fx-border-width: 1; -fx-border-radius: 50%; -fx-cursor: hand;");
             catStickerBtn.setStyle("-fx-font-size: 20px; -fx-background-radius: 50%; -fx-min-width: 45; -fx-min-height: 45; " +
                     "-fx-background-color: white; -fx-border-color: #ddd; -fx-border-width: 1; -fx-border-radius: 50%; -fx-cursor: hand;");
+            resetStickerBtn.setStyle("-fx-font-size: 20px; -fx-background-radius: 50%; -fx-min-width: 45; -fx-min-height: 45; " +
+                    "-fx-background-color: white; -fx-border-color: #ddd; -fx-border-width: 1; -fx-border-radius: 50%; -fx-cursor: hand;");
+        });
+
+        resetStickerBtn.setOnAction(e -> {
+            clearStickers();
+            currentStickerType = "none";
+            // Reset all button styles
+            axolotlStickerBtn.setStyle("-fx-font-size: 20px; -fx-background-radius: 50%; -fx-min-width: 45; -fx-min-height: 45; " +
+                    "-fx-background-color: white; -fx-border-color: #ddd; -fx-border-width: 1; -fx-border-radius: 50%; -fx-cursor: hand;");
+            catStickerBtn.setStyle("-fx-font-size: 20px; -fx-background-radius: 50%; -fx-min-width: 45; -fx-min-height: 45; " +
+                    "-fx-background-color: white; -fx-border-color: #ddd; -fx-border-width: 1; -fx-border-radius: 50%; -fx-cursor: hand;");
+            pandaStickerBtn.setStyle("-fx-font-size: 20px; -fx-background-radius: 50%; -fx-min-width: 45; -fx-min-height: 45; " +
+                    "-fx-background-color: white; -fx-border-color: #ddd; -fx-border-width: 1; -fx-border-radius: 50%; -fx-cursor: hand;");
+
             // Visual feedback for reset button
             resetStickerBtn.setStyle("-fx-font-size: 20px; -fx-background-radius: 50%; -fx-min-width: 45; -fx-min-height: 45; " +
                     "-fx-background-color: white; -fx-border-color: #FF6B6B; -fx-border-width: 3; -fx-border-radius: 50%; -fx-cursor: hand;");
@@ -434,11 +478,17 @@ public class PhotoEditingPage extends BorderPane {
             );
             timeline.play();
         });
-        stickerGrid.add(resetStickerBtn, 3, 1);
+
+        // Add all 4 buttons to the grid in a single row
+        stickerGrid.add(axolotlStickerBtn, 0, 0);
+        stickerGrid.add(catStickerBtn, 1, 0);
+        stickerGrid.add(pandaStickerBtn, 2, 0);
+        stickerGrid.add(resetStickerBtn, 3, 0);
 
         stickersSection.getChildren().addAll(stickersLabel, stickerGrid);
         return stickersSection;
     }
+
 
     private HBox createColorsSection() {
         HBox colorsSection = new HBox(40);
@@ -574,6 +624,24 @@ public class PhotoEditingPage extends BorderPane {
         updatePhotostripLayout();
     }
 
+    private void addRandomPandaStickers() {
+        try {
+            clearStickers();
+            StackPane currentStackPane = getCurrentStackPane();
+            if (currentStackPane == null) return;
+
+            if (isVerticalLayout) {
+                addVerticalLayoutPandaStickers(currentStackPane);
+            } else {
+                addHorizontalLayoutPandaStickers(currentStackPane);
+            }
+            System.out.println("Added panda stickers to " + (isVerticalLayout ? "vertical" : "horizontal") + " layout");
+        } catch (Exception e) {
+            System.err.println("Error adding panda stickers: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
     private void addRandomAxolotlStickers() {
         try {
             clearStickers();
@@ -656,6 +724,25 @@ public class PhotoEditingPage extends BorderPane {
         }
     }
 
+    private void addVerticalLayoutPandaStickers(StackPane container) {
+        StickerPosition[] stickerPositions = {
+                new StickerPosition("hello.png", -40, -140),
+                new StickerPosition("eat.png", 40, -100),
+                new StickerPosition("happy.png", -35, -60),
+                new StickerPosition("mocking.png", 30, -10),
+                new StickerPosition("love.png", -35, 30),
+                new StickerPosition("full.png", 35, 30),
+                new StickerPosition("angry.png", 35, 80),
+                new StickerPosition("peace.png", -35, 120),
+                new StickerPosition("fever.png", 35, 120),
+                new StickerPosition("birthday.png", 0, -160),
+        };
+
+        for (StickerPosition pos : stickerPositions) {
+            addFixedSticker(container, "panda-stickers/" + pos.filename, pos.x, pos.y);
+        }
+    }
+
 
     private void addHorizontalLayoutAxolotlStickers(StackPane container) {
         StickerPosition[] stickerPositions = {
@@ -695,6 +782,25 @@ public class PhotoEditingPage extends BorderPane {
         }
     }
 
+    private void addHorizontalLayoutPandaStickers(StackPane container) {
+        StickerPosition[] stickerPositions = {
+                new StickerPosition("hello.png", -150, -60),
+                new StickerPosition("eat.png", -50, -60),
+                new StickerPosition("happy.png", -150, 60),
+                new StickerPosition("mocking.png", 50, -60),
+                new StickerPosition("love.png", -50, 60),
+                new StickerPosition("full.png", 50, 60),
+                new StickerPosition("angry.png", 150, 60),
+                new StickerPosition("peace.png", 150, -10),
+                new StickerPosition("fever.png", 150, -60),
+                new StickerPosition("birthday.png", -150, -10),
+        };
+
+        for (StickerPosition pos : stickerPositions) {
+            addFixedSticker(container, "panda-stickers/" + pos.filename, pos.x, pos.y);
+        }
+    }
+
     private void reapplyCurrentStickers() {
         switch (currentStickerType) {
             case "axolotl":
@@ -702,6 +808,9 @@ public class PhotoEditingPage extends BorderPane {
                 break;
             case "cat":
                 addRandomCatStickers();
+                break;
+            case "panda":  // ADD THIS CASE
+                addRandomPandaStickers();
                 break;
             case "none":
             default:
@@ -1017,6 +1126,3 @@ public class PhotoEditingPage extends BorderPane {
         alert.showAndWait();
     }
 }
-
-
-

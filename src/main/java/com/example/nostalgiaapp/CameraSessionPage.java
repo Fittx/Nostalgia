@@ -228,10 +228,14 @@ public class CameraSessionPage {
 
                     // Create and show the photo editing page (FIXED: Use correct class name)
                     PhotoEditingPage editPage = new PhotoEditingPage(photosForEdit, currentStage, mainApp);
-                    Scene editScene = new Scene(editPage, 1200, 800);
+                    Scene editScene = new Scene(editPage, 1000, 700);
 
                     currentStage.setScene(editScene);
                     currentStage.setTitle("Nostalgia - Edit Photos");
+                    currentStage.setMinHeight(1000);
+                    currentStage.setMinWidth(700);
+                    currentStage.setResizable(true);
+
 
                     System.out.println("✅ Navigated to Photo Editing page with " + photosForEdit.size() + " photos");
 
@@ -278,6 +282,9 @@ public class CameraSessionPage {
         Scene scene = new Scene(mainContainer, 1000, 700);
         stage.setTitle("Nostalgia - Camera Session");
         stage.setScene(scene);
+        stage.setMinWidth(1000);
+        stage.setMinHeight(700);
+        stage.setResizable(true);
         stage.setOnCloseRequest(e -> {
             closeCamera();
             if (mainApp != null) {
