@@ -4,11 +4,9 @@
     import javafx.scene.image.PixelFormat;
     import javafx.scene.image.PixelWriter;
     import javafx.scene.image.WritableImage;
-    import org.opencv.core.CvType;
     import org.opencv.core.Mat;
     import org.opencv.imgproc.Imgproc;
 
-    import java.nio.ByteBuffer;
 
     public class OpenCVUtils {
 

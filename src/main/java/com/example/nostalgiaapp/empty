@@ -1,9 +1,13 @@
 package com.example.nostalgiaapp;
 
-import java.util.ArrayList;
 import javafx.scene.layout.StackPane;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.Cursor;
+import java.io.File;
+import java.net.MalformedURLException;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -14,12 +18,16 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import java.util.ArrayList;
 import java.util.List;
 import javafx.scene.effect.ColorAdjust;
 
-
 public class PhotoEditingPage extends BorderPane {
 
+
+    private List<ImageView> stickerViews; // Track placed stickers
+    private String selectedSticker = null; // Currently selected sticker
+    private boolean stickerMode = false;
     private VBox photostripPreview;
     private HBox horizontalPhotostripPreview;
     private VBox photostripBackgroundVertical;
@@ -33,44 +41,6 @@ public class PhotoEditingPage extends BorderPane {
     private boolean enableDate = true;
     private Stage currentStage;
     private NostalgiaApp mainApp;
-    private List<String> axolotlStickerPaths;
-    private List<String> catStickerPaths;
-    private List<ImageView> stickerViews;
-    private String currentStickerType = "none";
-
-
-    private void initializeStickerPaths() {
-        axolotlStickerPaths = new ArrayList<>();
-        catStickerPaths = new ArrayList<>();
-        stickerViews = new ArrayList<>();
-
-        // Add all axolotl sticker paths (existing code)
-        String axolotlBasePath = "/com/example/nostalgiaapp/Stickers/axolotl-stickers/";
-        axolotlStickerPaths.add(axolotlBasePath + "angry.png");
-        axolotlStickerPaths.add(axolotlBasePath + "eat.png");
-        axolotlStickerPaths.add(axolotlBasePath + "happy.png");
-        axolotlStickerPaths.add(axolotlBasePath + "hi.png");
-        axolotlStickerPaths.add(axolotlBasePath + "laugh.png");
-        axolotlStickerPaths.add(axolotlBasePath + "love.png");
-        axolotlStickerPaths.add(axolotlBasePath + "ok.png");
-        axolotlStickerPaths.add(axolotlBasePath + "read.png");
-        axolotlStickerPaths.add(axolotlBasePath + "sad.png");
-        axolotlStickerPaths.add(axolotlBasePath + "sleep.png");
-
-        // Add all cat sticker paths (NEW)
-        String catBasePath = "/com/example/nostalgiaapp/Stickers/cat-stickers/";
-        catStickerPaths.add(catBasePath + "angry.png");
-        catStickerPaths.add(catBasePath + "eat.png");
-        catStickerPaths.add(catBasePath + "full.png");
-        catStickerPaths.add(catBasePath + "love.png");
-        catStickerPaths.add(catBasePath + "mocking.png");
-        catStickerPaths.add(catBasePath + "no.png");
-        catStickerPaths.add(catBasePath + "run.png");
-        catStickerPaths.add(catBasePath + "sad.png");
-        catStickerPaths.add(catBasePath + "sing.png");
-        catStickerPaths.add(catBasePath + "yes.png");
-    }
-
 
     // Layout selection buttons for highlighting
     private Button verticalLayoutBtn;
@@ -103,9 +73,6 @@ public class PhotoEditingPage extends BorderPane {
         this.mainApp = mainApp;
         this.photoImages = new ArrayList<>();
 
-        // Initialize sticker paths
-        initializeStickerPaths();
-
         // Set main background color
         this.setStyle("-fx-background-color: #FFF4C5;");
 
@@ -115,6 +82,8 @@ public class PhotoEditingPage extends BorderPane {
     }
 
     private void initializeComponents() {
+
+        this.stickerViews = new ArrayList<>();
         // Create header
         HBox header = createHeader();
         this.setTop(header);
@@ -176,7 +145,20 @@ public class PhotoEditingPage extends BorderPane {
     }
 
     private void createPhotostripPreviews() {
-        // Create background containers for photostrips
+        // Create background containers for photostrips using StackPane for layering
+        StackPane photostripContainerVertical = new StackPane();
+        photostripContainerVertical.setAlignment(Pos.CENTER);
+        photostripContainerVertical.setPadding(new Insets(15));
+        photostripContainerVertical.setStyle("-fx-background-color: white; -fx-background-radius: 15; " +
+                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0.5, 2, 2);");
+
+        StackPane photostripContainerHorizontal = new StackPane();
+        photostripContainerHorizontal.setAlignment(Pos.CENTER);
+        photostripContainerHorizontal.setPadding(new Insets(15));
+        photostripContainerHorizontal.setStyle("-fx-background-color: white; -fx-background-radius: 15; " +
+                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0.5, 2, 2);");
+
+        // Create photostrip backgrounds
         photostripBackgroundVertical = new VBox();
         photostripBackgroundVertical.setAlignment(Pos.CENTER);
         photostripBackgroundVertical.setPadding(new Insets(15));
@@ -189,11 +171,8 @@ public class PhotoEditingPage extends BorderPane {
         photostripBackgroundHorizontal.setStyle("-fx-background-color: white; -fx-background-radius: 15; " +
                 "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0.5, 2, 2);");
 
-        // Create StackPane containers for layering photos and stickers
-        StackPane verticalStackPane = new StackPane();
-        StackPane horizontalStackPane = new StackPane();
-
-        // Vertical photostrip preview
+        // Vertical photostrip with StackPane for sticker overlay
+        StackPane verticalPhotostripStack = new StackPane();
         photostripPreview = new VBox(5);
         photostripPreview.setPadding(new Insets(10));
         photostripPreview.setAlignment(Pos.CENTER);
@@ -203,7 +182,12 @@ public class PhotoEditingPage extends BorderPane {
         photostripPreview.setPrefHeight(350);
         photostripPreview.setMaxHeight(350);
 
-        // Horizontal photostrip preview
+        // Add click handler for sticker placement
+        verticalPhotostripStack.setOnMouseClicked(this::handlePhotostripClick);
+        verticalPhotostripStack.getChildren().add(photostripPreview);
+
+        // Horizontal photostrip with StackPane for sticker overlay
+        StackPane horizontalPhotostripStack = new StackPane();
         horizontalPhotostripPreview = new HBox(5);
         horizontalPhotostripPreview.setPadding(new Insets(10));
         horizontalPhotostripPreview.setAlignment(Pos.CENTER);
@@ -213,15 +197,15 @@ public class PhotoEditingPage extends BorderPane {
         horizontalPhotostripPreview.setPrefHeight(120);
         horizontalPhotostripPreview.setMaxHeight(120);
 
-        // Add photostrips to StackPanes
-        verticalStackPane.getChildren().add(photostripPreview);
-        horizontalStackPane.getChildren().add(horizontalPhotostripPreview);
+        // Add click handler for sticker placement
+        horizontalPhotostripStack.setOnMouseClicked(this::handlePhotostripClick);
+        horizontalPhotostripStack.getChildren().add(horizontalPhotostripPreview);
 
-        // Add StackPanes to backgrounds
-        photostripBackgroundVertical.getChildren().add(verticalStackPane);
-        photostripBackgroundHorizontal.getChildren().add(horizontalStackPane);
+        // Add photostrips to their backgrounds
+        photostripBackgroundVertical.getChildren().add(verticalPhotostripStack);
+        photostripBackgroundHorizontal.getChildren().add(horizontalPhotostripStack);
 
-        // Set background container sizes
+        // Set the background container sizes
         photostripBackgroundVertical.setPrefWidth(212/2);
         photostripBackgroundVertical.setMaxWidth(212/2);
         photostripBackgroundVertical.setPrefHeight(380);
@@ -338,107 +322,166 @@ public class PhotoEditingPage extends BorderPane {
         stickerGrid.setHgap(12);
         stickerGrid.setVgap(12);
 
-        // DECLARE BOTH BUTTONS FIRST (without setting actions)
-        Button axolotlStickerBtn = new Button();
-        Button catStickerBtn = new Button();
+        // Load stickers from resources
+        String[] stickerFiles = {
+                "axolotl-stickers.svg", // Your main sticker file
+                // Add more sticker files here as needed
+        };
 
-        // Set up axolotl button appearance
-        try {
-            Image axolotlIcon = new Image(getClass().getResourceAsStream("/com/example/nostalgiaapp/Stickers/axolotl-stickers/hi.png"));
-            ImageView iconView = new ImageView(axolotlIcon);
-            iconView.setFitWidth(30);
-            iconView.setFitHeight(30);
-            iconView.setPreserveRatio(true);
-            axolotlStickerBtn.setGraphic(iconView);
-        } catch (Exception e) {
-            axolotlStickerBtn.setText("🐯");
-        }
-        axolotlStickerBtn.setStyle("-fx-font-size: 20px; -fx-background-radius: 50%; -fx-min-width: 45; -fx-min-height: 45; " +
-                "-fx-background-color: white; -fx-border-color: #ddd; -fx-border-width: 1; -fx-border-radius: 50%; -fx-cursor: hand;");
+        for (int i = 0; i < stickerOptions.length && i < stickerFiles.length; i++) {
+            Button stickerBtn = new Button();
 
-        // Set up cat button appearance
-        try {
-            Image catIcon = new Image(getClass().getResourceAsStream("/com/example/nostalgiaapp/Stickers/cat-stickers/yes.png"));
-            ImageView catIconView = new ImageView(catIcon);
-            catIconView.setFitWidth(30);
-            catIconView.setFitHeight(30);
-            catIconView.setPreserveRatio(true);
-            catStickerBtn.setGraphic(catIconView);
-        } catch (Exception e) {
-            catStickerBtn.setText("🐱");
-        }
-        catStickerBtn.setStyle("-fx-font-size: 20px; -fx-background-radius: 50%; -fx-min-width: 45; -fx-min-height: 45; " +
-                "-fx-background-color: white; -fx-border-color: #ddd; -fx-border-width: 1; -fx-border-radius: 50%; -fx-cursor: hand;");
+            try {
+                // Load sticker image
+                String stickerPath = "/com/example/nostalgiaapp/Stickers/" + stickerFiles[i];
+                Image stickerImage = new Image(getClass().getResourceAsStream(stickerPath));
+                ImageView stickerView = new ImageView(stickerImage);
+                stickerView.setFitWidth(35);
+                stickerView.setFitHeight(35);
+                stickerView.setPreserveRatio(true);
 
-        // NOW SET THE ACTIONS (after both buttons are declared)
-        axolotlStickerBtn.setOnAction(e -> {
-            addRandomAxolotlStickers();
-            currentStickerType = "axolotl";
-            axolotlStickerBtn.setStyle("-fx-font-size: 20px; -fx-background-radius: 50%; -fx-min-width: 45; -fx-min-height: 45; " +
-                    "-fx-background-color: white; -fx-border-color: #4CAF50; -fx-border-width: 3; -fx-border-radius: 50%; -fx-cursor: hand;");
-            // Reset cat button style
-            catStickerBtn.setStyle("-fx-font-size: 20px; -fx-background-radius: 50%; -fx-min-width: 45; -fx-min-height: 45; " +
-                    "-fx-background-color: white; -fx-border-color: #ddd; -fx-border-width: 1; -fx-border-radius: 50%; -fx-cursor: hand;");
-        });
+                stickerBtn.setGraphic(stickerView);
+            } catch (Exception e) {
+                // Fallback to emoji if image loading fails
+                stickerBtn.setText(stickerOptions[i]);
+            }
 
-        catStickerBtn.setOnAction(e -> {
-            addRandomCatStickers();
-            currentStickerType = "cat";
-            catStickerBtn.setStyle("-fx-font-size: 20px; -fx-background-radius: 50%; -fx-min-width: 45; -fx-min-height: 45; " +
-                    "-fx-background-color: white; -fx-border-color: #4CAF50; -fx-border-width: 3; -fx-border-radius: 50%; -fx-cursor: hand;");
-            // Reset axolotl button style
-            axolotlStickerBtn.setStyle("-fx-font-size: 20px; -fx-background-radius: 50%; -fx-min-width: 45; -fx-min-height: 45; " +
-                    "-fx-background-color: white; -fx-border-color: #ddd; -fx-border-width: 1; -fx-border-radius: 50%; -fx-cursor: hand;");
-        });
-
-        // Add buttons to grid
-        stickerGrid.add(axolotlStickerBtn, 0, 0);
-        stickerGrid.add(catStickerBtn, 1, 0); // Place cat button next to axolotl button
-
-        // Add other placeholder buttons (modify the loop to account for the new cat button)
-        for (int i = 2; i < stickerOptions.length - 1; i++) {
-            Button stickerBtn = new Button(stickerOptions[i]);
             stickerBtn.setStyle("-fx-font-size: 20px; -fx-background-radius: 50%; -fx-min-width: 45; -fx-min-height: 45; " +
                     "-fx-background-color: white; -fx-border-color: #ddd; -fx-border-width: 1; -fx-border-radius: 50%; -fx-cursor: hand;");
-            stickerBtn.setOnAction(e -> {
-                Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setTitle("Stickers Not Available");
-                alert.setHeaderText(null);
-                alert.setContentText("This sticker type is not yet implemented.");
-                alert.showAndWait();
-            });
+
+            // Handle sticker selection
+            final int stickerIndex = i;
+            final String stickerFile = stickerFiles[i];
+            stickerBtn.setOnAction(e -> selectSticker(stickerFile, stickerIndex));
+
             stickerGrid.add(stickerBtn, i % 4, i / 4);
         }
 
-        // Add reset/trash button
-        Button resetStickerBtn = new Button("🗑️");
-        resetStickerBtn.setStyle("-fx-font-size: 20px; -fx-background-radius: 50%; -fx-min-width: 45; -fx-min-height: 45; " +
-                "-fx-background-color: white; -fx-border-color: #ddd; -fx-border-width: 1; -fx-border-radius: 50%; -fx-cursor: hand;");
-        resetStickerBtn.setOnAction(e -> {
-            clearStickers();
-            currentStickerType = "none"; // Reset sticker type tracking
-            // Reset both button styles
-            axolotlStickerBtn.setStyle("-fx-font-size: 20px; -fx-background-radius: 50%; -fx-min-width: 45; -fx-min-height: 45; " +
-                    "-fx-background-color: white; -fx-border-color: #ddd; -fx-border-width: 1; -fx-border-radius: 50%; -fx-cursor: hand;");
-            catStickerBtn.setStyle("-fx-font-size: 20px; -fx-background-radius: 50%; -fx-min-width: 45; -fx-min-height: 45; " +
-                    "-fx-background-color: white; -fx-border-color: #ddd; -fx-border-width: 1; -fx-border-radius: 50%; -fx-cursor: hand;");
-            // Visual feedback for reset button
-            resetStickerBtn.setStyle("-fx-font-size: 20px; -fx-background-radius: 50%; -fx-min-width: 45; -fx-min-height: 45; " +
-                    "-fx-background-color: white; -fx-border-color: #FF6B6B; -fx-border-width: 3; -fx-border-radius: 50%; -fx-cursor: hand;");
-            // Reset the reset button style after delay
-            javafx.animation.Timeline timeline = new javafx.animation.Timeline(
-                    new javafx.animation.KeyFrame(javafx.util.Duration.seconds(1), event -> {
-                        resetStickerBtn.setStyle("-fx-font-size: 20px; -fx-background-radius: 50%; -fx-min-width: 45; -fx-min-height: 45; " +
-                                "-fx-background-color: white; -fx-border-color: #ddd; -fx-border-width: 1; -fx-border-radius: 50%; -fx-cursor: hand;");
-                    })
-            );
-            timeline.play();
-        });
-        stickerGrid.add(resetStickerBtn, 3, 1);
+        // Add clear stickers button
+        Button clearStickersBtn = new Button("Clear All");
+        clearStickersBtn.setStyle("-fx-background-color: #FF6B6B; -fx-text-fill: white; -fx-background-radius: 15; " +
+                "-fx-padding: 8 16; -fx-font-weight: bold; -fx-cursor: hand;");
+        clearStickersBtn.setOnAction(e -> clearAllStickers());
 
-        stickersSection.getChildren().addAll(stickersLabel, stickerGrid);
+        stickersSection.getChildren().addAll(stickersLabel, stickerGrid, clearStickersBtn);
         return stickersSection;
     }
+
+    private void selectSticker(String stickerFile, int stickerIndex) {
+        selectedSticker = stickerFile;
+        stickerMode = true;
+
+        // Visual feedback - show which sticker is selected
+        System.out.println("Selected sticker: " + stickerFile);
+
+        // Change cursor to indicate sticker mode
+        if (isVerticalLayout) {
+            photostripBackgroundVertical.setCursor(Cursor.CROSSHAIR);
+        } else {
+            photostripBackgroundHorizontal.setCursor(Cursor.CROSSHAIR);
+        }
+    }
+
+    private void handlePhotostripClick(MouseEvent event) {
+        if (stickerMode && selectedSticker != null) {
+            placeStickerAt(event.getX(), event.getY());
+        }
+    }
+
+    private void placeStickerAt(double x, double y) {
+        try {
+            // Load the selected sticker
+            String stickerPath = "/com/example/nostalgiaapp/Stickers/" + selectedSticker;
+            Image stickerImage = new Image(getClass().getResourceAsStream(stickerPath));
+
+            ImageView stickerView = new ImageView(stickerImage);
+            stickerView.setFitWidth(30); // Adjust size as needed
+            stickerView.setFitHeight(30);
+            stickerView.setPreserveRatio(true);
+
+            // Position the sticker
+            stickerView.setLayoutX(x - 15); // Center the sticker on click point
+            stickerView.setLayoutY(y - 15);
+
+            // Make sticker draggable and removable
+            makeStickerInteractive(stickerView);
+
+            // Add to the current photostrip container
+            StackPane currentContainer = getCurrentPhotostripContainer();
+            if (currentContainer != null) {
+                currentContainer.getChildren().add(stickerView);
+                stickerViews.add(stickerView);
+            }
+
+            // Exit sticker mode
+            stickerMode = false;
+            selectedSticker = null;
+            resetCursor();
+
+        } catch (Exception e) {
+            System.err.println("Error placing sticker: " + e.getMessage());
+            showErrorDialog("Sticker Error", "Unable to place sticker. Please try again.");
+        }
+    }
+
+    private StackPane getCurrentPhotostripContainer() {
+        try {
+            VBox leftSide = (VBox) ((HBox) this.getCenter()).getChildren().get(0);
+            VBox backgroundContainer = (VBox) leftSide.getChildren().get(0);
+            return (StackPane) backgroundContainer.getChildren().get(0);
+        } catch (Exception e) {
+            System.err.println("Error getting photostrip container: " + e.getMessage());
+            return null;
+        }
+    }
+
+    private void makeStickerInteractive(ImageView stickerView) {
+        // Make sticker draggable
+        stickerView.setOnMousePressed(e -> {
+            stickerView.setUserData(new double[]{e.getSceneX() - stickerView.getLayoutX(),
+                    e.getSceneY() - stickerView.getLayoutY()});
+        });
+
+        stickerView.setOnMouseDragged(e -> {
+            double[] offset = (double[]) stickerView.getUserData();
+            stickerView.setLayoutX(e.getSceneX() - offset[0]);
+            stickerView.setLayoutY(e.getSceneY() - offset[1]);
+        });
+
+        // Right-click to remove sticker
+        stickerView.setOnMouseClicked(e -> {
+            if (e.getClickCount() == 2) { // Double-click to remove
+                StackPane container = getCurrentPhotostripContainer();
+                if (container != null) {
+                    container.getChildren().remove(stickerView);
+                    stickerViews.remove(stickerView);
+                }
+            }
+        });
+
+        // Visual feedback
+        stickerView.setOnMouseEntered(e -> stickerView.setOpacity(0.8));
+        stickerView.setOnMouseExited(e -> stickerView.setOpacity(1.0));
+    }
+
+    private void clearAllStickers() {
+        StackPane currentContainer = getCurrentPhotostripContainer();
+        if (currentContainer != null) {
+            // Remove all stickers from the container
+            currentContainer.getChildren().removeAll(stickerViews);
+            stickerViews.clear();
+        }
+    }
+
+    private void resetCursor() {
+        if (isVerticalLayout) {
+            photostripBackgroundVertical.setCursor(Cursor.DEFAULT);
+        } else {
+            photostripBackgroundHorizontal.setCursor(Cursor.DEFAULT);
+        }
+    }
+
+
 
     private HBox createColorsSection() {
         HBox colorsSection = new HBox(40);
@@ -574,208 +617,6 @@ public class PhotoEditingPage extends BorderPane {
         updatePhotostripLayout();
     }
 
-    private void addRandomAxolotlStickers() {
-        try {
-            clearStickers();
-            StackPane currentStackPane = getCurrentStackPane();
-            if (currentStackPane == null) return;
-
-            if (isVerticalLayout) {
-                addVerticalLayoutAxolotlStickers(currentStackPane);
-            } else {
-                addHorizontalLayoutAxolotlStickers(currentStackPane);
-            }
-            System.out.println("Added axolotl stickers to " + (isVerticalLayout ? "vertical" : "horizontal") + " layout");
-        } catch (Exception e) {
-            System.err.println("Error adding axolotl stickers: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    private void addRandomCatStickers() {
-        try {
-            clearStickers();
-            StackPane currentStackPane = getCurrentStackPane();
-            if (currentStackPane == null) return;
-
-            if (isVerticalLayout) {
-                addVerticalLayoutCatStickers(currentStackPane);
-            } else {
-                addHorizontalLayoutCatStickers(currentStackPane);
-            }
-            System.out.println("Added cat stickers to " + (isVerticalLayout ? "vertical" : "horizontal") + " layout");
-        } catch (Exception e) {
-            System.err.println("Error adding cat stickers: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-
-
-    private StackPane getCurrentStackPane() {
-        VBox currentBackground = isVerticalLayout ? photostripBackgroundVertical : photostripBackgroundHorizontal;
-        if (currentBackground.getChildren().isEmpty()) return null;
-        return (StackPane) currentBackground.getChildren().get(0);
-    }
-
-    private void addVerticalLayoutAxolotlStickers(StackPane container) {
-        StickerPosition[] stickerPositions = {
-                new StickerPosition("hi.png", -40, -140),
-                new StickerPosition("eat.png", 40, -100),
-                new StickerPosition("happy.png", -35, -60),
-                new StickerPosition("laugh.png", 30, -10),
-                new StickerPosition("love.png", -35, 30),
-                new StickerPosition("read.png", 35, 30),
-                new StickerPosition("angry.png", 35, 80),
-                new StickerPosition("ok.png", -35, 120),
-                new StickerPosition("sad.png", 35, 120),
-                new StickerPosition("sleep.png", 0, -160),
-        };
-
-        for (StickerPosition pos : stickerPositions) {
-            addFixedSticker(container, "axolotl-stickers/" + pos.filename, pos.x, pos.y);
-        }
-    }
-
-    private void addVerticalLayoutCatStickers(StackPane container) {
-        StickerPosition[] stickerPositions = {
-                new StickerPosition("yes.png", -40, -140),
-                new StickerPosition("eat.png", 40, -100),
-                new StickerPosition("love.png", -35, -60),
-                new StickerPosition("mocking.png", 30, -10),
-                new StickerPosition("full.png", -35, 30),
-                new StickerPosition("run.png", 35, 30),
-                new StickerPosition("angry.png", 35, 80),
-                new StickerPosition("no.png", -35, 120),
-                new StickerPosition("sad.png", 35, 120),
-                new StickerPosition("sing.png", 0, -160),
-        };
-
-        for (StickerPosition pos : stickerPositions) {
-            addFixedSticker(container, "cat-stickers/" + pos.filename, pos.x, pos.y);
-        }
-    }
-
-
-    private void addHorizontalLayoutAxolotlStickers(StackPane container) {
-        StickerPosition[] stickerPositions = {
-                new StickerPosition("hi.png", -150, -60),
-                new StickerPosition("eat.png", -50, -60),
-                new StickerPosition("happy.png", -150, 60),
-                new StickerPosition("laugh.png", 50, -60),
-                new StickerPosition("love.png", -50, 60),
-                new StickerPosition("read.png", 50, 60),
-                new StickerPosition("angry.png", 150, 60),
-                new StickerPosition("ok.png", 150, -10),
-                new StickerPosition("sad.png", 150, -60),
-                new StickerPosition("sleep.png", -150, -10),
-        };
-
-        for (StickerPosition pos : stickerPositions) {
-            addFixedSticker(container, "axolotl-stickers/" + pos.filename, pos.x, pos.y);
-        }
-    }
-
-    private void addHorizontalLayoutCatStickers(StackPane container) {
-        StickerPosition[] stickerPositions = {
-                new StickerPosition("yes.png", -150, -60),
-                new StickerPosition("eat.png", -50, -60),
-                new StickerPosition("love.png", -150, 60),
-                new StickerPosition("mocking.png", 50, -60),
-                new StickerPosition("full.png", -50, 60),
-                new StickerPosition("run.png", 50, 60),
-                new StickerPosition("angry.png", 150, 60),
-                new StickerPosition("no.png", 150, -10),
-                new StickerPosition("sad.png", 150, -60),
-                new StickerPosition("sing.png", -150, -10),
-        };
-
-        for (StickerPosition pos : stickerPositions) {
-            addFixedSticker(container, "cat-stickers/" + pos.filename, pos.x, pos.y);
-        }
-    }
-
-    private void reapplyCurrentStickers() {
-        switch (currentStickerType) {
-            case "axolotl":
-                addRandomAxolotlStickers();
-                break;
-            case "cat":
-                addRandomCatStickers();
-                break;
-            case "none":
-            default:
-                // No stickers to re-apply
-                break;
-        }
-    }
-
-    private void addFixedSticker(StackPane container, String stickerPath, double x, double y) {
-        try {
-            String fullPath = "/com/example/nostalgiaapp/Stickers/" + stickerPath;
-
-            Image stickerImage = new Image(getClass().getResourceAsStream(fullPath));
-            ImageView stickerView = new ImageView(stickerImage);
-
-            double stickerSize = 25;
-            stickerView.setFitWidth(stickerSize);
-            stickerView.setFitHeight(stickerSize);
-            stickerView.setPreserveRatio(true);
-
-            stickerView.setTranslateX(x);
-            stickerView.setTranslateY(y);
-
-            container.getChildren().add(stickerView);
-            stickerViews.add(stickerView);
-
-            System.out.println("Added sticker: " + stickerPath + " at position (" + x + ", " + y + ")");
-
-        } catch (Exception e) {
-            System.err.println("Error loading sticker " + stickerPath + ": " + e.getMessage());
-        }
-    }
-
-    private static class StickerPosition {
-        String filename;
-        double x, y;
-
-        StickerPosition(String filename, double x, double y) {
-            this.filename = filename;
-            this.x = x;
-            this.y = y;
-        }
-    }
-
-
-
-    private void clearStickers() {
-        if (!stickerViews.isEmpty()) {
-            // Clear stickers from both layouts to ensure complete cleanup
-            StackPane verticalStackPane = null;
-            StackPane horizontalStackPane = null;
-
-            if (!photostripBackgroundVertical.getChildren().isEmpty()) {
-                verticalStackPane = (StackPane) photostripBackgroundVertical.getChildren().get(0);
-            }
-            if (!photostripBackgroundHorizontal.getChildren().isEmpty()) {
-                horizontalStackPane = (StackPane) photostripBackgroundHorizontal.getChildren().get(0);
-            }
-
-            // Remove stickers from both layouts
-            if (verticalStackPane != null) {
-                verticalStackPane.getChildren().removeAll(stickerViews);
-            }
-            if (horizontalStackPane != null) {
-                horizontalStackPane.getChildren().removeAll(stickerViews);
-            }
-
-            stickerViews.clear();
-            System.out.println("Cleared all stickers from both layouts");
-        }
-    }
-
-
-
     private void loadPhotosIntoPreview() {
         photoImages.clear();
 
@@ -816,8 +657,8 @@ public class PhotoEditingPage extends BorderPane {
 
     private void switchToVerticalLayout() {
         if (!isVerticalLayout) {
-            // Save current sticker type before switching
-            String previousStickerType = currentStickerType;
+            // Save current stickers before switching
+            List<ImageView> currentStickers = new ArrayList<>(stickerViews);
 
             isVerticalLayout = true;
             updateLayoutButtons();
@@ -828,16 +669,16 @@ public class PhotoEditingPage extends BorderPane {
             leftSide.getChildren().clear();
             leftSide.getChildren().add(photostripBackgroundVertical);
 
-            // If there were stickers, re-add them to the new layout
-            currentStickerType = previousStickerType;
-            reapplyCurrentStickers();
+            // Restore stickers to new layout
+            restoreStickers(currentStickers);
         }
     }
 
+
     private void switchToHorizontalLayout() {
         if (isVerticalLayout) {
-            // Save current sticker type before switching
-            String previousStickerType = currentStickerType;
+            // Save current stickers before switching
+            List<ImageView> currentStickers = new ArrayList<>(stickerViews);
 
             isVerticalLayout = false;
             updateLayoutButtons();
@@ -848,9 +689,23 @@ public class PhotoEditingPage extends BorderPane {
             leftSide.getChildren().clear();
             leftSide.getChildren().add(photostripBackgroundHorizontal);
 
-            // If there were stickers, re-add them to the new layout
-            currentStickerType = previousStickerType;
-            reapplyCurrentStickers();
+            // Restore stickers to new layout
+            restoreStickers(currentStickers);
+        }
+    }
+
+    private void restoreStickers(List<ImageView> stickers) {
+        StackPane currentContainer = getCurrentPhotostripContainer();
+        if (currentContainer != null && !stickers.isEmpty()) {
+            // Clear existing stickers
+            stickerViews.clear();
+
+            // Add saved stickers to new container
+            for (ImageView sticker : stickers) {
+                // Adjust position for different layout if needed
+                currentContainer.getChildren().add(sticker);
+                stickerViews.add(sticker);
+            }
         }
     }
 
@@ -985,6 +840,10 @@ public class PhotoEditingPage extends BorderPane {
         updatePhotostripLayout(); // Refresh the layout to show/hide date
     }
 
+    private void handleStickerSelection() {
+        // This method is no longer used as sticker functionality is handled in createStickersSection
+    }
+
     private void handleContinue() {
         // This method is no longer used as continue functionality is handled in createActionButtons
     }
@@ -1017,6 +876,3 @@ public class PhotoEditingPage extends BorderPane {
         alert.showAndWait();
     }
 }
-
-
-
