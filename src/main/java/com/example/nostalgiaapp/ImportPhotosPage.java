@@ -2,7 +2,6 @@ package com.example.nostalgiaapp;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.image.Image;
@@ -20,11 +19,7 @@ import javafx.stage.Stage;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import java.util.ArrayList;
-import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.image.WritableImage;
-import javafx.scene.SnapshotParameters;
-import javafx.scene.paint.Color;
+
 
 import java.io.File;
 import java.util.List;
