@@ -34,6 +34,7 @@ public class ImportPhotosPage {
     private int selectedSlot = -1;
     private boolean[] hasPhoto = new boolean[3];
     private ArrayList<Image> importedPhotos = new ArrayList<>();
+    private Button submitBtn; // Add this field to store button reference
 
     public void show(Stage stage, NostalgiaApp mainApp) {
         this.stage = stage;
@@ -68,22 +69,22 @@ public class ImportPhotosPage {
         }
 
         // Submit button
-        Button submitBtn = new Button("Submit Images");
+        submitBtn = new Button("Submit Images"); // Use the class field
         submitBtn.setPrefWidth(200);
         submitBtn.setPrefHeight(45);
-        submitBtn.setStyle("-fx-background-color: #FF8C42; -fx-text-fill: white; " +
-                "-fx-background-radius: 25; -fx-font-size: 14px; -fx-font-weight: bold;");
+        updateSubmitButtonState(submitBtn);
 
         submitBtn.setOnAction(e -> {
-            // Collect only non-null images
-            ArrayList<Image> photosForEdit = new ArrayList<>();
-            for (Image img : importedPhotos) {
-                if (img != null) {
-                    photosForEdit.add(img);
+            // Check if all three slots are filled
+            if (areAllSlotsFilled()) {
+                // Collect all images (we know all 3 are filled)
+                ArrayList<Image> photosForEdit = new ArrayList<>();
+                for (int i = 0; i < 3; i++) {
+                    if (importedPhotos.get(i) != null) {
+                        photosForEdit.add(importedPhotos.get(i));
+                    }
                 }
-            }
 
-            if (!photosForEdit.isEmpty()) {
                 try {
                     PhotoEditingPage editPage = new PhotoEditingPage(photosForEdit, stage, mainApp);
                     Scene editScene = new Scene(editPage, 1000, 700);
@@ -100,7 +101,6 @@ public class ImportPhotosPage {
                     System.err.println("❌ Error navigating to edit page: " + ex.getMessage());
                     ex.printStackTrace();
 
-                    // Show error dialog and stay on import page
                     Platform.runLater(() -> {
                         Alert alert = new Alert(Alert.AlertType.ERROR);
                         alert.setTitle("Navigation Error");
@@ -110,14 +110,12 @@ public class ImportPhotosPage {
                     });
                 }
             } else {
-                System.out.println("❌ No photos available to edit");
-
-                // Show info dialog
+                // Show warning that all slots must be filled
                 Platform.runLater(() -> {
-                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                    alert.setTitle("No Photos");
-                    alert.setHeaderText("No photos to edit");
-                    alert.setContentText("Please import some photos first before trying to edit them.");
+                    Alert alert = new Alert(Alert.AlertType.WARNING);
+                    alert.setTitle("Incomplete Selection");
+                    alert.setHeaderText("All photo slots must be filled");
+                    alert.setContentText("Please add photos to all 3 slots before submitting.");
                     alert.showAndWait();
                 });
             }
@@ -139,6 +137,34 @@ public class ImportPhotosPage {
         stage.setMinWidth(1000);
         stage.setMinHeight(700);
         stage.show();
+    }
+
+    // Helper methods to add to your class:
+    private boolean areAllSlotsFilled() {
+        for (int i = 0; i < 3; i++) {
+            if (!hasPhoto[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void updateSubmitButtonState(Button submitBtn) {
+        boolean allFilled = areAllSlotsFilled();
+
+        if (allFilled) {
+            // Enable button with active styling
+            submitBtn.setDisable(false);
+            submitBtn.setStyle("-fx-background-color: #FF8C42; -fx-text-fill: white; " +
+                    "-fx-background-radius: 25; -fx-font-size: 14px; -fx-font-weight: bold; " +
+                    "-fx-opacity: 1.0;");
+        } else {
+            // Disable button with grayed out styling
+            submitBtn.setDisable(true);
+            submitBtn.setStyle("-fx-background-color: #CCCCCC; -fx-text-fill: #666666; " +
+                    "-fx-background-radius: 25; -fx-font-size: 14px; -fx-font-weight: bold; " +
+                    "-fx-opacity: 0.6;");
+        }
     }
 
     private HBox createHeader() {
@@ -400,12 +426,14 @@ public class ImportPhotosPage {
         if (selectedSlot == index) {
             selectedSlot = -1;
             updateSlotSelection();
+            updateSubmitButtonState(submitBtn);
         }
     }
 
     private void selectSlot(int index) {
         selectedSlot = index;
         updateSlotSelection();
+        updateSubmitButtonState(submitBtn);
     }
 
     private void updateSlotSelection() {
@@ -423,6 +451,4 @@ public class ImportPhotosPage {
             }
         }
     }
-
-
 }
