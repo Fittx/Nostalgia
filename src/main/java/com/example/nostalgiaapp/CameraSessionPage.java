@@ -226,7 +226,6 @@ public class CameraSessionPage {
                     // Close current camera resources
                     closeCamera();
 
-                    // Create and show the photo editing page (FIXED: Use correct class name)
                     PhotoEditingPage editPage = new PhotoEditingPage(photosForEdit, currentStage, mainApp);
                     Scene editScene = new Scene(editPage, 1000, 700);
 

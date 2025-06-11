@@ -61,8 +61,17 @@ public class NostalgiaApp extends Application {
         importPhotosBtn.setPrefHeight(50);
         importPhotosBtn.setStyle("-fx-background-color: #2ECC71; -fx-text-fill: white; -fx-background-radius: 25; -fx-font-size: 14px; -fx-font-weight: bold;");
         // Leave empty for now as requested
+        // Replace the existing import photos button action with this:
         importPhotosBtn.setOnAction(e -> {
-            System.out.println("Import Photos - Not implemented yet");
+            ImportPhotosPage importPage = new ImportPhotosPage();
+            try {
+                Stage importStage = new Stage();
+                importPage.show(importStage, this); // Pass reference to main app
+                primaryStage.hide(); // Hide main window when import page opens
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                System.out.println("Error opening import page: " + ex.getMessage());
+            }
         });
 
         buttonContainer.getChildren().addAll(useCameraBtn, importPhotosBtn);

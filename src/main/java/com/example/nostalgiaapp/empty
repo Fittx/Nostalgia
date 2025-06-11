@@ -6,3 +6,48 @@
 //presentation page
 //ui/ux page
 //documentations
+
+
+if (!photosForEdit.isEmpty()) {
+                try {
+                    // Close current camera resources
+                    closeCamera();
+
+                    PhotoEditingPage editPage = new PhotoEditingPage(photosForEdit, currentStage, mainApp);
+                    Scene editScene = new Scene(editPage, 1000, 700);
+
+                    currentStage.setScene(editScene);
+                    currentStage.setTitle("Nostalgia - Edit Photos");
+                    currentStage.setMinHeight(1000);
+                    currentStage.setMinWidth(700);
+                    currentStage.setResizable(true);
+
+
+                    System.out.println("✅ Navigated to Photo Editing page with " + photosForEdit.size() + " photos");
+
+                } catch (Exception ex) {
+                    System.err.println("❌ Error navigating to edit page: " + ex.getMessage());
+                    ex.printStackTrace();
+
+                    // Show error dialog and stay on camera page
+                    Platform.runLater(() -> {
+                        Alert alert = new Alert(Alert.AlertType.ERROR);
+                        alert.setTitle("Navigation Error");
+                        alert.setHeaderText("Cannot open photo editor");
+                        alert.setContentText("There was an error opening the photo editing page. Please try again.");
+                        alert.showAndWait();
+                    });
+                }
+            } else {
+                System.out.println("❌ No photos available to edit");
+
+                // Show info dialog
+                Platform.runLater(() -> {
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle("No Photos");
+                    alert.setHeaderText("No photos to edit");
+                    alert.setContentText("Please take some photos first before trying to edit them.");
+                    alert.showAndWait();
+                });
+            }
+        });
