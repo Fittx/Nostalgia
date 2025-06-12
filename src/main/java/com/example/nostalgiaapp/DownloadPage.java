@@ -94,13 +94,15 @@ public class DownloadPage extends BorderPane {
             // Create main layout
             setupLayout();
 
-            // Display the photostrip directly if available
+            // Display the photostrip if available
             if (capturedPhotos != null && !capturedPhotos.isEmpty()) {
+                // The first (and should be only) image is our final photostrip
                 finalPhotoStrip = capturedPhotos.get(0);
                 displayPhotoStrip(finalPhotoStrip);
             } else {
                 // Show a placeholder if no photos
                 createPlaceholderPhotoStrip();
+                finalPhotoStrip = null; // Make sure it's null for error handling
             }
 
         } catch (Exception e) {
@@ -146,7 +148,6 @@ public class DownloadPage extends BorderPane {
         topSection.setPadding(new Insets(10));
         this.setTop(topSection);
 
-
         // Center content
         HBox mainContent = new HBox(30);
         mainContent.setPadding(new Insets(20));
@@ -178,8 +179,6 @@ public class DownloadPage extends BorderPane {
 
         mainContent.getChildren().addAll(leftSection, centerSection);
         this.setCenter(mainContent);
-        this.setMaxWidth(800);  // Set a maximum width for the entire scene
-        this.setPrefWidth(800);
     }
 
 
@@ -276,6 +275,9 @@ public class DownloadPage extends BorderPane {
         return logo;
     }
 
+    // Updated displayPhotoStrip method in DownloadPage.java
+
+
     private void displayPhotoStrip(Image photoStripImage) {
         if (photoStripImage != null) {
             // Create ImageView for display
@@ -289,12 +291,18 @@ public class DownloadPage extends BorderPane {
             // Prevent any stretching at the ImageView level
             photoStripView.setPickOnBounds(true);
 
-            // Update UI
+            // Update UI - clear and add
             photoStripContainer.getChildren().clear();
             photoStripContainer.getChildren().add(photoStripView);
+
+            // Debug output
+            System.out.println("Displaying photostrip - Original size: " +
+                    photoStripImage.getWidth() + "x" + photoStripImage.getHeight());
+        } else {
+            System.err.println("Warning: Attempting to display null photostrip image");
+            createPlaceholderPhotoStrip();
         }
     }
-
 
     private void createPlaceholderPhotoStrip() {
         final int width = 170;
@@ -372,8 +380,15 @@ public class DownloadPage extends BorderPane {
      */
     private void handleDownload() {
         try {
+            // Validate that we have a photostrip to download
             if (finalPhotoStrip == null) {
-                showErrorDialog("Download Error", "Photo strip is not ready. Please wait and try again.");
+                showErrorDialog("Download Error", "No photostrip available for download. Please try again.");
+                return;
+            }
+
+            // Validate image dimensions
+            if (finalPhotoStrip.getWidth() <= 0 || finalPhotoStrip.getHeight() <= 0) {
+                showErrorDialog("Download Error", "Invalid photostrip image. Please try again.");
                 return;
             }
 
@@ -391,6 +406,10 @@ public class DownloadPage extends BorderPane {
             File file = fileChooser.showSaveDialog(currentStage);
 
             if (file != null) {
+                // Debug output
+                System.out.println("Saving photostrip to: " + file.getAbsolutePath());
+                System.out.println("Image size: " + finalPhotoStrip.getWidth() + "x" + finalPhotoStrip.getHeight());
+
                 // Save file asynchronously to prevent UI blocking
                 CompletableFuture.runAsync(() -> savePhotoStrip(file, finalPhotoStrip))
                         .thenRun(() -> javafx.application.Platform.runLater(() -> {
@@ -407,14 +426,14 @@ public class DownloadPage extends BorderPane {
                         .exceptionally(throwable -> {
                             LOGGER.log(Level.SEVERE, "Error saving photo strip", throwable);
                             javafx.application.Platform.runLater(() ->
-                                    showErrorDialog("Save Error", "Failed to save photo strip. Please check permissions and try again."));
+                                    showErrorDialog("Save Error", "Failed to save photo strip: " + throwable.getMessage()));
                             return null;
                         });
             }
 
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error in download process", e);
-            showErrorDialog("Download Error", "An unexpected error occurred during download. Please try again.");
+            showErrorDialog("Download Error", "An unexpected error occurred during download: " + e.getMessage());
         }
     }
 

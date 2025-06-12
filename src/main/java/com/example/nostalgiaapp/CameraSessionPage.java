@@ -231,8 +231,8 @@ public class CameraSessionPage {
 
                     currentStage.setScene(editScene);
                     currentStage.setTitle("Nostalgia - Edit Photos");
-                    currentStage.setMinHeight(1000);
-                    currentStage.setMinWidth(700);
+                    currentStage.setMinHeight(700);
+                    currentStage.setMinWidth(1000);
                     currentStage.setResizable(true);
 
 

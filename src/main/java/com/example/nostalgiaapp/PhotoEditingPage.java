@@ -642,12 +642,15 @@ public class PhotoEditingPage extends BorderPane {
                 DownloadPage downloadPage = new DownloadPage(photoList, currentStage, mainApp);
 
                 // Create a new scene with the download page
-                Scene downloadScene = new Scene(downloadPage,
-                        currentStage.getScene().getWidth(),
-                        currentStage.getScene().getHeight());
+                Scene downloadScene = new Scene(downloadPage, 1000, 700);
+
 
                 // Set the new scene on the current stage
                 currentStage.setScene(downloadScene);
+                currentStage.setTitle("Download Your Photostrip");
+                currentStage.setMinHeight(700);
+                currentStage.setMinWidth(1000);
+                currentStage.setResizable(true);
 
             } catch (Exception ex) {
                 System.err.println("Error transitioning to download page: " + ex.getMessage());
