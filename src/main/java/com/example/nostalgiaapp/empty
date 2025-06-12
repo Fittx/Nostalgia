@@ -1,53 +1,20 @@
-//next would be the download of the photostrip
-//continue page
-//last page
-//import page --- edit page ---- download page ---- button to download
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 
-//presentation page
-//ui/ux page
-//documentations
+import javafx.scene.Group;
+import javafx.scene.Node;
+import javafx.scene.SnapshotParameters;
+import javafx.scene.control.Alert;
+import javafx.scene.image.WritableImage;
+import javafx.scene.shape.Rectangle;
+import javafx.stage.FileChooser;
 
-
-if (!photosForEdit.isEmpty()) {
-                try {
-                    // Close current camera resources
-                    closeCamera();
-
-                    PhotoEditingPage editPage = new PhotoEditingPage(photosForEdit, currentStage, mainApp);
-                    Scene editScene = new Scene(editPage, 1000, 700);
-
-                    currentStage.setScene(editScene);
-                    currentStage.setTitle("Nostalgia - Edit Photos");
-                    currentStage.setMinHeight(1000);
-                    currentStage.setMinWidth(700);
-                    currentStage.setResizable(true);
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 
 
-                    System.out.println("✅ Navigated to Photo Editing page with " + photosForEdit.size() + " photos");
-
-                } catch (Exception ex) {
-                    System.err.println("❌ Error navigating to edit page: " + ex.getMessage());
-                    ex.printStackTrace();
-
-                    // Show error dialog and stay on camera page
-                    Platform.runLater(() -> {
-                        Alert alert = new Alert(Alert.AlertType.ERROR);
-                        alert.setTitle("Navigation Error");
-                        alert.setHeaderText("Cannot open photo editor");
-                        alert.setContentText("There was an error opening the photo editing page. Please try again.");
-                        alert.showAndWait();
-                    });
-                }
-            } else {
-                System.out.println("❌ No photos available to edit");
-
-                // Show info dialog
-                Platform.runLater(() -> {
-                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                    alert.setTitle("No Photos");
-                    alert.setHeaderText("No photos to edit");
-                    alert.setContentText("Please take some photos first before trying to edit them.");
-                    alert.showAndWait();
-                });
-            }
-        });

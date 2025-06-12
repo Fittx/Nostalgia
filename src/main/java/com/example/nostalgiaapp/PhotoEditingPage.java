@@ -1,5 +1,8 @@
 package com.example.nostalgiaapp;
 
+import javafx.scene.Scene;
+import javafx.scene.SnapshotParameters;
+import javafx.scene.image.WritableImage;
 import java.util.ArrayList;
 import javafx.scene.layout.StackPane;
 import javafx.geometry.Insets;
@@ -490,6 +493,22 @@ public class PhotoEditingPage extends BorderPane {
     }
 
 
+    private WritableImage capturePhotostrip() {
+        // Determine which container to capture based on current layout
+        Pane containerToCapture = isVerticalLayout ?
+                photostripBackgroundVertical : photostripBackgroundHorizontal;
+
+        // Create a snapshot of the photostrip
+        SnapshotParameters params = new SnapshotParameters();
+        params.setFill(Color.TRANSPARENT);
+
+        // Take snapshot of the entire photostrip with background
+        WritableImage image = containerToCapture.snapshot(params, null);
+
+        System.out.println("Photostrip captured successfully");
+        return image;
+    }
+
     private HBox createColorsSection() {
         HBox colorsSection = new HBox(40);
 
@@ -604,16 +623,37 @@ public class PhotoEditingPage extends BorderPane {
         });
 
         // Continue button
+        // Continue button
         Button continueBtn = new Button("CONTINUE");
         continueBtn.setStyle("-fx-background-color: #87CEEB; -fx-text-fill: white; -fx-font-weight: bold; " +
                 "-fx-background-radius: 10; -fx-padding: 12 25; -fx-font-size: 14px; -fx-cursor: hand;");
 
+// Replace the existing action handler with this:
         continueBtn.setOnAction(e -> {
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Continue Not Available");
-            alert.setHeaderText(null);
-            alert.setContentText("Continue functionality is not yet implemented. This will proceed to the next step in a future update.");
-            alert.showAndWait();
+            try {
+                // Capture the current state of the photostrip
+                WritableImage photostripImage = capturePhotostrip();
+
+                // Create a list with the captured photostrip
+                List<Image> photoList = new ArrayList<>();
+                photoList.add(photostripImage);
+
+                // Create the download page and pass the captured image
+                DownloadPage downloadPage = new DownloadPage(photoList, currentStage, mainApp);
+
+                // Create a new scene with the download page
+                Scene downloadScene = new Scene(downloadPage,
+                        currentStage.getScene().getWidth(),
+                        currentStage.getScene().getHeight());
+
+                // Set the new scene on the current stage
+                currentStage.setScene(downloadScene);
+
+            } catch (Exception ex) {
+                System.err.println("Error transitioning to download page: " + ex.getMessage());
+                ex.printStackTrace();
+                showErrorDialog("Error", "Could not create download page: " + ex.getMessage());
+            }
         });
 
         dateAndContinueSection.getChildren().addAll(dateSwitch, continueBtn);
