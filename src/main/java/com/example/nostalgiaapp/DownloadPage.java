@@ -113,7 +113,7 @@ public class DownloadPage extends BorderPane {
 
 
     private void initializeComponents() {
-        // Initialize photo strip container with FIXED sizing
+        // Initialize photo strip container with flexible sizing
         photoStripContainer = new VBox();
         photoStripContainer.setAlignment(Pos.CENTER);
         photoStripContainer.setSpacing(5);
@@ -121,13 +121,10 @@ public class DownloadPage extends BorderPane {
         photoStripContainer.setStyle("-fx-background-color: #B8E6FF; -fx-background-radius: 15; " +
                 "-fx-border-color: #87CEEB; -fx-border-width: 2; -fx-border-radius: 15;");
 
-        // FIXED sizing - prevent stretching
+        // FIXED: Don't set fixed heights - let it adapt to content
         photoStripContainer.setPrefWidth(200);
         photoStripContainer.setMinWidth(200);
-        photoStripContainer.setMaxWidth(200);
-        photoStripContainer.setPrefHeight(500);
-        photoStripContainer.setMinHeight(500);
-        photoStripContainer.setMaxHeight(500);
+        photoStripContainer.setMaxWidth(450); // Allow wider for horizontal strips
 
         // Initialize message panel
         messagePanel = createMessagePanel();
@@ -138,6 +135,7 @@ public class DownloadPage extends BorderPane {
         // Initialize Nostalgia logo
         nostalgiaLogo = createNostalgiaLogo();
     }
+
 
 
     private void setupLayout() {
@@ -172,9 +170,9 @@ public class DownloadPage extends BorderPane {
         centerSection.getChildren().add(photoStripContainer);
         centerSection.setPadding(new Insets(20));
 
-        // FIXED width for center section
+        // FIXED: More flexible width for center section
         centerSection.setPrefWidth(240);
-        centerSection.setMaxWidth(240);
+        centerSection.setMaxWidth(450); // Allow wider for horizontal strips
         centerSection.setFillWidth(false);
 
         mainContent.getChildren().addAll(leftSection, centerSection);
@@ -280,23 +278,58 @@ public class DownloadPage extends BorderPane {
 
     private void displayPhotoStrip(Image photoStripImage) {
         if (photoStripImage != null) {
+            // Determine if the photostrip is horizontal or vertical by aspect ratio
+            boolean isHorizontal = photoStripImage.getWidth() > photoStripImage.getHeight();
+
             // Create ImageView for display
             ImageView photoStripView = new ImageView(photoStripImage);
 
-            // STRICT sizing - no stretching allowed
-            photoStripView.setFitWidth(160);  // Slightly smaller than container
-            photoStripView.setPreserveRatio(true);
-            photoStripView.setSmooth(true);
-
-            // Prevent any stretching at the ImageView level
-            photoStripView.setPickOnBounds(true);
-
-            // Update UI - clear and add
+            // Clear any existing content
             photoStripContainer.getChildren().clear();
-            photoStripContainer.getChildren().add(photoStripView);
+
+            // Adjust container based on orientation
+            if (isHorizontal) {
+                // For horizontal photostrips
+                photoStripContainer.setPrefWidth(400);
+                photoStripContainer.setMinWidth(200);
+                photoStripContainer.setMaxWidth(450);
+                photoStripContainer.setPrefHeight(-1); // Use computed size
+                photoStripContainer.setMinHeight(-1); // Use computed size
+                photoStripContainer.setMaxHeight(-1); // Use computed size
+
+                // Set horizontal width but preserve ratio
+                photoStripView.setFitWidth(360);
+                photoStripView.setPreserveRatio(true);
+                photoStripView.setSmooth(true);
+
+                // Center in container
+                VBox wrapper = new VBox(photoStripView);
+                wrapper.setAlignment(Pos.CENTER);
+                photoStripContainer.getChildren().add(wrapper);
+
+                System.out.println("Displaying horizontal photostrip");
+            } else {
+                // For vertical photostrips (original behavior)
+                photoStripContainer.setPrefWidth(200);
+                photoStripContainer.setMinWidth(200);
+                photoStripContainer.setMaxWidth(200);
+                photoStripContainer.setPrefHeight(-1); // Use computed size
+                photoStripContainer.setMinHeight(-1); // Use computed size
+                photoStripContainer.setMaxHeight(-1); // Use computed size
+
+                // Set vertical width but preserve ratio
+                photoStripView.setFitWidth(160);
+                photoStripView.setPreserveRatio(true);
+                photoStripView.setSmooth(true);
+
+                // Add directly to container
+                photoStripContainer.getChildren().add(photoStripView);
+
+                System.out.println("Displaying vertical photostrip");
+            }
 
             // Debug output
-            System.out.println("Displaying photostrip - Original size: " +
+            System.out.println("Photostrip dimensions: " +
                     photoStripImage.getWidth() + "x" + photoStripImage.getHeight());
         } else {
             System.err.println("Warning: Attempting to display null photostrip image");
