@@ -17,7 +17,7 @@ A JavaFX-based nostalgic photo capture application with advanced OpenCV image pr
 - **OpenCV**: Version 4.5.1 (native installation required)
 - **Camera**: Built-in or external webcam
 - **Memory**: At least 4GB of RAM (8GB RAM recommended)
-- **Operating System**: Windows 10+, macOS 10.14+, or Ubuntu 18.04+
+- **Operating System**: Windows 10+
 
 ## 🚀 Installation Guide
 
